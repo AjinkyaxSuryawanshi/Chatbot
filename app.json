@@ -1,7 +1,7 @@
 {
   "expo": {
-  "name": "mDojo",
-  "slug": "mdojo",
+    "name": "DOJO",
+    "slug": "mdojo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.jpg",
@@ -43,11 +43,11 @@
     },
     "plugins": [
       "expo-router",
-  "@react-native-firebase/app",
+      "@react-native-firebase/app",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/icon.jpg",
+          "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#000000"
@@ -106,7 +106,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/icon.jpg"
+      "favicon": "./assets/images/favicon.png"
     },
     "experiments": {
       "typedRoutes": true
@@ -114,9 +114,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "f19a50a3-bfab-4170-9ce0-d7731da82b5c"
+        "projectId": "79d76029-4484-42bd-b085-abe28aa13983"
       }
     },
-  "owner": "rucha_55"
+    "owner": "krux070"
   }
 }

@@ -1,10 +1,10 @@
 // Firebase configuration
 export const firebaseConfig = {
-  apiKey: "AIzaSyBzAXsI39sMc2St_Uuhs4Z4ld3f__KOfb4",
-  authDomain: "mahindraproject-b0a6f.firebaseapp.com",
-  projectId: "mahindraproject-b0a6f",
-  storageBucket: "mahindraproject-b0a6f.appspot.com",
-  messagingSenderId: "824885367826",
-  appId: "1:824885367826:web:6387dd58e498d73bee74cb",
-  measurementId: "G-0EJRJ05XY3"
+  apiKey: "AIzaSyDSt3io73SDudpm2wUHDqRZq4fU7YPL9zU",
+  authDomain: "dojo-81d05.firebaseapp.com",
+  projectId: "dojo-81d05",
+  storageBucket: "dojo-81d05.firebasestorage.app",
+  messagingSenderId: "32806906622",
+  appId: "1:32806906622:web:08b35c33258267177413af",
+  measurementId: "G-73EH83FG36"
 };
