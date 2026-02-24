@@ -25,6 +25,7 @@ import {
 import { PieChart } from 'react-native-chart-kit';
 import { db } from '../config/firebase';
 import ChartCard from './ChartCard';
+import { importEmployeesFromExcel } from './import-employees';
 const createStyles = (windowWidth) => StyleSheet.create({
   container: {
     flex: 1,
@@ -373,7 +374,7 @@ const styles = createStyles(Dimensions.get('window').width);
 const AdminPanel = () => {
   const router = useRouter();
   // ... (keep all your existing state and functions until renderContent)
-   const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [adminCount, setAdminCount] = useState(null);
   const [employeeCount, setEmployeeCount] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -393,11 +394,11 @@ const AdminPanel = () => {
         // Get admin count
         const adminSnap = await getDocs(collection(db, 'register'));
         setAdminCount(adminSnap.size);
-        
+
         // Get employee count
         const empSnap = await getDocs(collection(db, 'employees'));
         setEmployeeCount(empSnap.size);
-        
+
         // Prepare department chart data
         const empData = empSnap.docs.map(doc => doc.data());
         const deptMap = {};
@@ -410,18 +411,18 @@ const AdminPanel = () => {
           value: deptMap[dept],
         }));
         setDepartmentChartData(chartData);
-        
+
         // Get mood data from chat responses
         const moodSnap = await getDocs(collection(db, 'chatResponses'));
         const moodCounts = {};
         let totalMoods = 0;
-        
+
         moodSnap.docs.forEach(doc => {
           const mood = doc.data().mood || 'UNKNOWN';
           moodCounts[mood] = (moodCounts[mood] || 0) + 1;
           totalMoods++;
         });
-        
+
         // Determine max mood
         let maxCount = 0;
         let dominantMood = 'SAD';
@@ -431,10 +432,10 @@ const AdminPanel = () => {
             dominantMood = mood;
           }
         });
-        
+
         setMaxMood(dominantMood);
         setMoodPercentage(Math.round((maxCount / totalMoods) * 100));
-        
+
         // Prepare mood data for pie chart
         const moodChartData = Object.keys(moodCounts).map(mood => ({
           name: mood,
@@ -443,7 +444,7 @@ const AdminPanel = () => {
           legendFontColor: '#7F7F7F',
           legendFontSize: 15,
         }));
-        
+
         setMoodData(moodChartData);
         setHits(totalMoods);
       } catch (error) {
@@ -456,7 +457,7 @@ const AdminPanel = () => {
         setLoading(false);
       }
     };
-    
+
     fetchCounts();
 
     // Handle window dimension changes
@@ -474,7 +475,7 @@ const AdminPanel = () => {
 
   const getMoodColor = (mood) => {
     if (!mood) return '#9E9E9E'; // Default grey for undefined moods
-    
+
     const moodLower = mood.toLowerCase();
     if (moodLower.includes('happy') || moodLower.includes('glad')) {
       return '#4CAF50'; // Green
@@ -530,7 +531,7 @@ const AdminPanel = () => {
                 <Text style={styles.cardValue}>{maxMood}</Text>
               </View>
             </View>
-            
+
             {/* Mood Pie Chart */}
             {moodData.length > 0 && (
               <View style={styles.chartContainer}>
@@ -554,7 +555,7 @@ const AdminPanel = () => {
                 />
               </View>
             )}
-            
+
             {/* Department Chart */}
             <Text style={styles.sectionTitle}>Employees per Department</Text>
             <ChartCard
@@ -581,109 +582,109 @@ const AdminPanel = () => {
 
   // ... (keep the rest of your AdminPanel component)
   return (
-      <SafeAreaView style={styles.container}>
-        {/* Sidebar - only visible on large screens or when toggled on mobile */}
-        {(windowDimensions.width > 768 || sidebarVisible) && (
-          <View style={[styles.sidebar, windowDimensions.width <= 768 && styles.mobileSidebar]}>
-            <Text style={styles.sidebarHeader}>MDOIO ADMIN</Text>
-            
-            <TouchableOpacity 
-              style={[styles.menuItem, activeTab === 'dashboard' && styles.activeMenuItem]}
-              onPress={() => handleTabChange('dashboard')}
-            >
-              <Text style={styles.menuText}>Dashboard</Text>
-            </TouchableOpacity>
-            
-            <Text style={styles.menuCategory}>INTEGRACE</Text>
-            
-            <TouchableOpacity 
-              style={[styles.menuItem, activeTab === 'adminProfile' && styles.activeMenuItem]}
-              onPress={() => handleTabChange('adminProfile')}
-            >
-              <Text style={styles.menuText}>Admin Profile</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.menuItem, activeTab === 'employeeData' && styles.activeMenuItem]}
-              onPress={() => handleTabChange('employeeData')}
-            >
-              <Text style={styles.menuText}>Employee Data</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.menuItem, activeTab === 'charts' && styles.activeMenuItem]}
-              onPress={() => handleTabChange('charts')}
-            >
-              <Text style={styles.menuText}>Charts</Text>
-            </TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      {/* Sidebar - only visible on large screens or when toggled on mobile */}
+      {(windowDimensions.width > 768 || sidebarVisible) && (
+        <View style={[styles.sidebar, windowDimensions.width <= 768 && styles.mobileSidebar]}>
+          <Text style={styles.sidebarHeader}>MDOIO ADMIN</Text>
 
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={handleLogout}
-            >
-              <Text style={styles.menuText}>Logout</Text>
+          <TouchableOpacity
+            style={[styles.menuItem, activeTab === 'dashboard' && styles.activeMenuItem]}
+            onPress={() => handleTabChange('dashboard')}
+          >
+            <Text style={styles.menuText}>Dashboard</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.menuCategory}>INTEGRACE</Text>
+
+          <TouchableOpacity
+            style={[styles.menuItem, activeTab === 'adminProfile' && styles.activeMenuItem]}
+            onPress={() => handleTabChange('adminProfile')}
+          >
+            <Text style={styles.menuText}>Admin Profile</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.menuItem, activeTab === 'employeeData' && styles.activeMenuItem]}
+            onPress={() => handleTabChange('employeeData')}
+          >
+            <Text style={styles.menuText}>Employee Data</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.menuItem, activeTab === 'charts' && styles.activeMenuItem]}
+            onPress={() => handleTabChange('charts')}
+          >
+            <Text style={styles.menuText}>Charts</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={handleLogout}
+          >
+            <Text style={styles.menuText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Main Content Area */}
+      <View style={styles.mainContentContainer}>
+        {/* Mobile Header with Hamburger Menu */}
+        {windowDimensions.width <= 768 && (
+          <View style={styles.mobileHeader}>
+            <TouchableOpacity onPress={toggleSidebar} style={styles.menuButton}>
+              <MaterialIcons name="menu" size={28} color="#2c3e50" />
             </TouchableOpacity>
+            <Text style={styles.mobileHeaderTitle}>
+              {activeTab === 'dashboard' && 'Dashboard'}
+              {activeTab === 'adminProfile' && 'Admin Profiles'}
+              {activeTab === 'employeeData' && 'Employee Data'}
+              {activeTab === 'charts' && 'Charts'}
+            </Text>
           </View>
         )}
-        
-        {/* Main Content Area */}
-        <View style={styles.mainContentContainer}>
-          {/* Mobile Header with Hamburger Menu */}
-          {windowDimensions.width <= 768 && (
-            <View style={styles.mobileHeader}>
-              <TouchableOpacity onPress={toggleSidebar} style={styles.menuButton}>
-                <MaterialIcons name="menu" size={28} color="#2c3e50" />
-              </TouchableOpacity>
-              <Text style={styles.mobileHeaderTitle}>
-                {activeTab === 'dashboard' && 'Dashboard'}
-                {activeTab === 'adminProfile' && 'Admin Profiles'}
-                {activeTab === 'employeeData' && 'Employee Data'}
-                {activeTab === 'charts' && 'Charts'}
-              </Text>
-            </View>
-          )}
-          
-          <ScrollView 
-            contentContainerStyle={[
-              styles.mainContent,
-              { paddingBottom: windowDimensions.width <= 768 ? 20 : 40 }
-            ]}
-          >
-            {renderContent()}
-          </ScrollView>
-        </View>
 
-        {/* Q&A Modal */}
-        <Modal
-          visible={qaModalVisible}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => setQaModalVisible(false)}
+        <ScrollView
+          contentContainerStyle={[
+            styles.mainContent,
+            { paddingBottom: windowDimensions.width <= 768 ? 20 : 40 }
+          ]}
         >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Employee Q&amp;A</Text>
-              <ScrollView style={{ maxHeight: 300 }}>
-                {qaModalData && Object.entries(qaModalData).map(([question, answer], idx) => (
-                  <View key={idx} style={{ marginBottom: 12 }}>
-                    <Text style={{ fontWeight: 'bold', color: '#E31937' }}>{question}</Text>
-                    <Text style={{ marginLeft: 8 }}>{answer}</Text>
-                  </View>
-                ))}
-              </ScrollView>
-              <View style={styles.buttonRow}>
-                <TouchableOpacity
-                  style={[styles.addButton, { backgroundColor: '#E31937', marginTop: 10 }]}
-                  onPress={() => setQaModalVisible(false)}
-                >
-                  <Text style={styles.addButtonText}>Close</Text>
-                </TouchableOpacity>
-              </View>
+          {renderContent()}
+        </ScrollView>
+      </View>
+
+      {/* Q&A Modal */}
+      <Modal
+        visible={qaModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setQaModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Employee Q&amp;A</Text>
+            <ScrollView style={{ maxHeight: 300 }}>
+              {qaModalData && Object.entries(qaModalData).map(([question, answer], idx) => (
+                <View key={idx} style={{ marginBottom: 12 }}>
+                  <Text style={{ fontWeight: 'bold', color: '#E31937' }}>{question}</Text>
+                  <Text style={{ marginLeft: 8 }}>{answer}</Text>
+                </View>
+              ))}
+            </ScrollView>
+            <View style={styles.buttonRow}>
+              <TouchableOpacity
+                style={[styles.addButton, { backgroundColor: '#E31937', marginTop: 10 }]}
+                onPress={() => setQaModalVisible(false)}
+              >
+                <Text style={styles.addButtonText}>Close</Text>
+              </TouchableOpacity>
             </View>
           </View>
-        </Modal>
-      </SafeAreaView>
-    );
+        </View>
+      </Modal>
+    </SafeAreaView>
+  );
 };
 
 const DepartmentCharts = ({ windowDimensions }) => {
@@ -716,24 +717,24 @@ const DepartmentCharts = ({ windowDimensions }) => {
         const empSnap = await getDocs(collection(db, 'employees'));
         const empData = empSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         console.log('Fetched employees:', empData);
-        
+
         // Extract unique departments
         const depts = new Set();
         // Extract unique states
         const stateSet = new Set();
         // Extract unique roles
         const roleSet = new Set();
-        
+
         empData.forEach(emp => {
           if (emp.department) depts.add(emp.department);
           if (emp.state) stateSet.add(emp.state);
           if (emp.role) roleSet.add(emp.role);
         });
-        
+
         setDepartments(Array.from(depts));
         setStates(Array.from(stateSet));
         setRoles(Array.from(roleSet));
-        
+
         if (depts.size > 0) {
           setSelectedDepartment(Array.from(depts)[0]);
         }
@@ -763,7 +764,7 @@ const DepartmentCharts = ({ windowDimensions }) => {
   // Apply sorting to the feedback data
   const getSortedFeedback = (data) => {
     if (!sortConfig.key) return data;
-    
+
     return [...data].sort((a, b) => {
       if (a[sortConfig.key] < b[sortConfig.key]) {
         return sortConfig.direction === 'asc' ? -1 : 1;
@@ -779,15 +780,15 @@ const DepartmentCharts = ({ windowDimensions }) => {
   const applyFilters = (data) => {
     return data.filter(item => {
       // Search query filter
-      const matchesSearch = !searchQuery || 
+      const matchesSearch = !searchQuery ||
         (item.name && item.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (item.empId && item.empId.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (item.elaboration && item.elaboration.toLowerCase().includes(searchQuery.toLowerCase()));
-      
+
       // Mood filter
-      const matchesMood = selectedMood === 'All' || 
+      const matchesMood = selectedMood === 'All' ||
         (item.mood && item.mood.toLowerCase().includes(selectedMood.toLowerCase()));
-      
+
       // Date range filter
       let matchesDate = true;
       if (startDate) {
@@ -798,7 +799,7 @@ const DepartmentCharts = ({ windowDimensions }) => {
         end.setDate(end.getDate() + 1); // inclusive
         matchesDate = matchesDate && item.timestamp && item.timestamp < end;
       }
-      
+
       return matchesSearch && matchesMood && matchesDate;
     });
   };
@@ -875,17 +876,17 @@ const DepartmentCharts = ({ windowDimensions }) => {
       try {
         // Get all employees matching the selected filters
         let q = query(collection(db, 'employees'));
-        
+
         // If department is selected, add to query
         if (selectedDepartment !== 'All') {
           q = query(q, where('department', '==', selectedDepartment));
         }
-        
+
         // If state is selected, add to query
         if (selectedState !== 'All') {
           q = query(q, where('state', '==', selectedState));
         }
-        
+
         // If role is selected, add to query
         if (selectedRole !== 'All') {
           q = query(q, where('role', '==', selectedRole));
@@ -905,13 +906,13 @@ const DepartmentCharts = ({ windowDimensions }) => {
 
         moodSnap.docs.forEach(doc => {
           const moodData = doc.data();
-          const matchingEmployee = empData.find(emp => 
+          const matchingEmployee = empData.find(emp =>
             String(emp.empId).trim() === String(moodData.employeeId).trim()
           );
           if (!matchingEmployee) {
             console.log('No matching employee for chatResponse:', moodData.employeeId, moodData);
           }
-          
+
           // Convert Firestore timestamp to JS Date
           const moodTimestamp = moodData.timestamp?.toDate ? moodData.timestamp.toDate() : null;
 
@@ -928,20 +929,20 @@ const DepartmentCharts = ({ windowDimensions }) => {
 
           if (matchingEmployee && matchesDate) {
             const mood = moodData.mood || 'UNKNOWN';
-            
+
             // Count for department chart
             moodCounts[mood] = (moodCounts[mood] || 0) + 1;
-            
+
             // Count for state chart
             const stateKey = `${matchingEmployee.state || 'Unknown'}`;
             stateMoodCounts[stateKey] = stateMoodCounts[stateKey] || {};
             stateMoodCounts[stateKey][mood] = (stateMoodCounts[stateKey][mood] || 0) + 1;
-            
+
             // Count for role chart
             const roleKey = `${matchingEmployee.role || 'Unknown'}`;
             roleMoodCounts[roleKey] = roleMoodCounts[roleKey] || {};
             roleMoodCounts[roleKey][mood] = (roleMoodCounts[roleKey][mood] || 0) + 1;
-            
+
             moodDetails.push({
               id: doc.id,
               empId: matchingEmployee.empId,
@@ -987,25 +988,25 @@ const DepartmentCharts = ({ windowDimensions }) => {
         }));
 
         // Prepare state chart data (for selected state)
-        const stateChartData = selectedState !== 'All' 
+        const stateChartData = selectedState !== 'All'
           ? Object.keys(stateMoodCounts[selectedState] || {}).map(mood => ({
-              name: mood,
-              count: stateMoodCounts[selectedState][mood],
-              color: getMoodColor(mood),
-              legendFontColor: '#7F7F7F',
-              legendFontSize: 15,
-            }))
+            name: mood,
+            count: stateMoodCounts[selectedState][mood],
+            color: getMoodColor(mood),
+            legendFontColor: '#7F7F7F',
+            legendFontSize: 15,
+          }))
           : [];
 
         // Prepare role chart data (for selected role)
         const roleChartData = selectedRole !== 'All'
           ? Object.keys(roleMoodCounts[selectedRole] || {}).map(mood => ({
-              name: mood,
-              count: roleMoodCounts[selectedRole][mood],
-              color: getMoodColor(mood),
-              legendFontColor: '#7F7F7F',
-              legendFontSize: 15,
-            }))
+            name: mood,
+            count: roleMoodCounts[selectedRole][mood],
+            color: getMoodColor(mood),
+            legendFontColor: '#7F7F7F',
+            legendFontSize: 15,
+          }))
           : [];
 
         setDepartmentMoodData(deptChartData);
@@ -1052,7 +1053,7 @@ const DepartmentCharts = ({ windowDimensions }) => {
   }, [searchQuery, employeeMoodDetails, startDate, endDate]);
 
   const getMoodColor = (mood) => {
-    switch(mood.toUpperCase()) {
+    switch (mood.toUpperCase()) {
       case 'GLAD': return '#2ecc71';
       case 'MAD': return '#3498db';
       case 'SAD': return '#e74c3c';
@@ -1069,7 +1070,7 @@ const DepartmentCharts = ({ windowDimensions }) => {
   const departmentChartRef = useRef();
   const stateChartRef = useRef();
   const roleChartRef = useRef();
-  
+
   // Chart configuration
   const chartConfig = {
     backgroundColor: '#ffffff',
@@ -1112,11 +1113,11 @@ const DepartmentCharts = ({ windowDimensions }) => {
       console.warn('Chart ref is not available');
       return null;
     }
-    
+
     try {
       // Add a small delay to ensure the view is ready
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       // Get the view's layout first
       return new Promise((resolve) => {
         chartRef.current.measure(async (x, y, width, height, pageX, pageY) => {
@@ -1145,12 +1146,12 @@ const DepartmentCharts = ({ windowDimensions }) => {
     try {
       // Show loading indicator
       Alert.alert('Exporting PDF', 'Preparing your report...');
-      
+
       // Capture charts as images
       let deptChartImage = null;
       let stateChartImage = null;
       let roleChartImage = null;
-      
+
       try {
         deptChartImage = await captureChartAsImage(departmentChartRef);
         if (selectedState !== 'All') {
@@ -1277,18 +1278,18 @@ const DepartmentCharts = ({ windowDimensions }) => {
         htmlContent += `
           <h2>${selectedDepartment === 'All' ? 'All Departments' : selectedDepartment} Mood Distribution</h2>
           <div class="chart-container">
-            ${deptChartImage ? `<img src="${deptChartImage}" class="chart-image" alt="Department Mood Chart" />` : 
-              '<div class="chart-placeholder">[Chart not available in this view]</div>'}
+            ${deptChartImage ? `<img src="${deptChartImage}" class="chart-image" alt="Department Mood Chart" />` :
+            '<div class="chart-placeholder">[Chart not available in this view]</div>'}
             <div class="summary-box">
               <div class="summary-title">Summary (Total Responses: ${totalResponses})</div>
               <ul class="mood-list">
                 ${departmentMoodData.map(item => {
-                  const percentage = totalResponses > 0 ? Math.round((item.count / totalResponses) * 100) : 0;
-                  return `
+              const percentage = totalResponses > 0 ? Math.round((item.count / totalResponses) * 100) : 0;
+              return `
                     <li class="mood-item" style="color: ${item.color};">
                       <strong>${item.name}:</strong> ${item.count} responses (${percentage}%)
                     </li>`;
-                }).join('')}
+            }).join('')}
               </ul>
             </div>
           </div>
@@ -1301,18 +1302,18 @@ const DepartmentCharts = ({ windowDimensions }) => {
         htmlContent += `
           <h2>${selectedState} Mood Distribution</h2>
           <div class="chart-container">
-            ${stateChartImage ? `<img src="${stateChartImage}" class="chart-image" alt="State Mood Chart" />` : 
-              '<div class="chart-placeholder">[Chart not available in this view]</div>'}
+            ${stateChartImage ? `<img src="${stateChartImage}" class="chart-image" alt="State Mood Chart" />` :
+            '<div class="chart-placeholder">[Chart not available in this view]</div>'}
             <div class="summary-box">
               <div class="summary-title">Summary (Total Responses: ${totalResponses})</div>
               <ul class="mood-list">
                 ${stateMoodData.map(item => {
-                  const percentage = totalResponses > 0 ? Math.round((item.count / totalResponses) * 100) : 0;
-                  return `
+              const percentage = totalResponses > 0 ? Math.round((item.count / totalResponses) * 100) : 0;
+              return `
                     <li class="mood-item" style="color: ${item.color};">
                       <strong>${item.name}:</strong> ${item.count} responses (${percentage}%)
                     </li>`;
-                }).join('')}
+            }).join('')}
               </ul>
             </div>
           </div>
@@ -1325,18 +1326,18 @@ const DepartmentCharts = ({ windowDimensions }) => {
         htmlContent += `
           <h2>${selectedRole} Mood Distribution</h2>
           <div class="chart-container">
-            ${roleChartImage ? `<img src="${roleChartImage}" class="chart-image" alt="Role Mood Chart" />` : 
-              '<div class="chart-placeholder">[Chart not available in this view]</div>'}
+            ${roleChartImage ? `<img src="${roleChartImage}" class="chart-image" alt="Role Mood Chart" />` :
+            '<div class="chart-placeholder">[Chart not available in this view]</div>'}
             <div class="summary-box">
               <div class="summary-title">Summary (Total Responses: ${totalResponses})</div>
               <ul class="mood-list">
                 ${roleMoodData.map(item => {
-                  const percentage = totalResponses > 0 ? Math.round((item.count / totalResponses) * 100) : 0;
-                  return `
+              const percentage = totalResponses > 0 ? Math.round((item.count / totalResponses) * 100) : 0;
+              return `
                     <li class="mood-item" style="color: ${item.color};">
                       <strong>${item.name}:</strong> ${item.count} responses (${percentage}%)
                     </li>`;
-                }).join('')}
+            }).join('')}
               </ul>
             </div>
           </div>
@@ -1410,30 +1411,30 @@ const DepartmentCharts = ({ windowDimensions }) => {
               </thead>
               <tbody>
       `;
-      
+
       filteredEmployeeMoodDetails.forEach(item => {
         // Format date and time properly
         const formattedDate = formatDate(item.timestamp || item.date);
         const formattedTime = formatTime(item.timestamp) || item.time || '';
-        
+
         // Format comments to include both elaboration and chat data
         let comments = '';
         if (item.elaboration) {
           comments += `<div>${item.elaboration.replace(/\n/g, '<br>')}</div>`;
         }
-        
+
         // Add chat data if available
         if (item.chat && typeof item.chat === 'object') {
           const chatEntries = Object.entries(item.chat);
           if (chatEntries.length > 0) {
             if (comments) comments += '<div class="chat-section">';
-            comments += chatEntries.map(([question, answer]) => 
+            comments += chatEntries.map(([question, answer]) =>
               `<div class="question">${question}</div><div class="answer">${answer.replace(/\n/g, '<br>')}</div>`
             ).join('');
             if (comments.includes('chat-section')) comments += '</div>';
           }
         }
-        
+
         htmlContent += `
           <tr>
             <td>${formattedDate}</td>
@@ -1469,7 +1470,7 @@ const DepartmentCharts = ({ windowDimensions }) => {
       } else {
         // For mobile platforms - create HTML file
         const fileUri = FileSystem.documentDirectory + `employee_mood_data_${new Date().toISOString().split('T')[0]}.html`;
-        
+
         // Write the file
         FileSystem.writeAsStringAsync(fileUri, htmlContent, {
           encoding: FileSystem.EncodingType.UTF8,
@@ -1529,7 +1530,7 @@ const DepartmentCharts = ({ windowDimensions }) => {
           )}
         </View>
       </View>
-      
+
       <View style={styles.chartControls} className="chartControls">
         <View style={{ flex: 1, marginRight: 10 }}>
           <Text style={{ marginBottom: 5 }}>Department:</Text>
@@ -1544,7 +1545,7 @@ const DepartmentCharts = ({ windowDimensions }) => {
             ))}
           </Picker>
         </View>
-        
+
         <View style={{ flex: 1, marginRight: 10 }}>
           <Text style={{ marginBottom: 5 }}>State:</Text>
           <Picker
@@ -1558,7 +1559,7 @@ const DepartmentCharts = ({ windowDimensions }) => {
             ))}
           </Picker>
         </View>
-        
+
         <View style={{ flex: 1 }}>
           <Text style={{ marginBottom: 5 }}>Role:</Text>
           <Picker
@@ -1714,7 +1715,7 @@ const DepartmentCharts = ({ windowDimensions }) => {
                       {filteredEmployeeMoodDetails.length} records found
                     </Text>
                   </View>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.exportButton}
                     onPress={exportToCSV}
                     disabled={filteredEmployeeMoodDetails.length === 0}
@@ -1723,7 +1724,7 @@ const DepartmentCharts = ({ windowDimensions }) => {
                     <Text style={styles.exportButtonText}>Export to CSV</Text>
                   </TouchableOpacity>
                 </View>
-                
+
                 <ScrollView horizontal showsHorizontalScrollIndicator={true}>
                   <View style={{ minWidth: windowDimensions.width - 40 }}>
                     <View style={styles.tableHeader}>
@@ -1746,7 +1747,7 @@ const DepartmentCharts = ({ windowDimensions }) => {
                         <Text style={styles.headerCellText}>Date</Text>
                       </View>
                     </View>
-                    
+
                     {loading ? (
                       <View style={styles.loadingContainer}>
                         <ActivityIndicator size="large" color="#E31937" />
@@ -1754,8 +1755,8 @@ const DepartmentCharts = ({ windowDimensions }) => {
                       </View>
                     ) : filteredEmployeeMoodDetails.length > 0 ? (
                       filteredEmployeeMoodDetails.map((item, index) => (
-                        <View 
-                          key={`${item.id}-${index}`} 
+                        <View
+                          key={`${item.id}-${index}`}
                           style={[
                             styles.tableRow,
                             index % 2 === 0 ? styles.evenRow : styles.oddRow,
@@ -1770,21 +1771,21 @@ const DepartmentCharts = ({ windowDimensions }) => {
                               ID: {item.empId || 'N/A'}
                             </Text>
                           </View>
-                          
+
                           <View style={[styles.cell, { width: Math.max(120, (windowDimensions.width - 40) * 0.12) }]}>
                             <Text style={styles.cellText} numberOfLines={1}>
                               {item.department || 'N/A'}
                             </Text>
                           </View>
-                          
+
                           <View style={[styles.cell, { width: Math.max(100, (windowDimensions.width - 40) * 0.10), alignItems: 'center' }]}>
-                            <View 
+                            <View
                               style={[
                                 styles.moodBadge,
                                 { backgroundColor: `${getMoodColor(item.mood)}20` }
                               ]}
                             >
-                              <Text 
+                              <Text
                                 style={[
                                   styles.moodText,
                                   { color: getMoodColor(item.mood) }
@@ -1795,35 +1796,35 @@ const DepartmentCharts = ({ windowDimensions }) => {
                               </Text>
                             </View>
                           </View>
-                          
+
                           <View style={[styles.cell, { width: Math.max(300, (windowDimensions.width - 40) * 0.35), padding: 8 }]}>
                             {item.chat ? (
                               <View>
-                                    <Text style={[styles.feedbackText, { fontWeight: 'bold', color: '#E31937', marginBottom: 4, fontSize: 12 }]}>
-                                      Employee ID: {item.empId || 'N/A'}
+                                <Text style={[styles.feedbackText, { fontWeight: 'bold', color: '#E31937', marginBottom: 4, fontSize: 12 }]}>
+                                  Employee ID: {item.empId || 'N/A'}
+                                </Text>
+                                {Object.entries(item.chat).map(([question, answer], idx) => (
+                                  <View key={idx} style={{ marginBottom: 8 }}>
+                                    <Text style={[styles.feedbackText, { fontWeight: 'bold', color: '#2c3e50', marginBottom: 2 }]}>
+                                      {question}
                                     </Text>
-                                    {Object.entries(item.chat).map(([question, answer], idx) => (
-                                      <View key={idx} style={{ marginBottom: 8 }}>
-                                        <Text style={[styles.feedbackText, { fontWeight: 'bold', color: '#2c3e50', marginBottom: 2 }]}>
-                                          {question}
-                                        </Text>
-                                        <Text style={[styles.feedbackText, { marginLeft: 8, color: '#555' }]}>
-                                          {answer}
-                                        </Text>
-                                      </View>
-                                    ))}
+                                    <Text style={[styles.feedbackText, { marginLeft: 8, color: '#555' }]}>
+                                      {answer}
+                                    </Text>
                                   </View>
+                                ))}
+                              </View>
                             ) : (
                               <Text style={[styles.feedbackText, { fontStyle: 'italic', color: '#888' }]}>No comments</Text>
                             )}
                           </View>
-                          
+
                           <View style={[styles.cell, { width: Math.max(100, (windowDimensions.width - 40) * 0.10), justifyContent: 'center' }]}>
                             <Text style={styles.cellText}>
                               {item.time || '--:--'}
                             </Text>
                           </View>
-                          
+
                           <View style={[styles.cell, { width: Math.max(120, (windowDimensions.width - 40) * 0.12), justifyContent: 'center' }]}>
                             <Text style={styles.cellText}>
                               {item.date || '--/--/----'}
@@ -1994,7 +1995,7 @@ const AdminList = () => {
       // Generate CSV content
       const headers = ['Username', 'Email', 'Password'];
       let csvContent = headers.join(',') + '\n';
-      
+
       admins.forEach(admin => {
         const row = [
           `"${admin.username || ''}"`,
@@ -2017,7 +2018,7 @@ const AdminList = () => {
       } else {
         // For mobile platforms
         const fileUri = FileSystem.documentDirectory + 'admin_report.csv';
-        
+
         // Write the file
         await FileSystem.writeAsStringAsync(fileUri, csvContent, {
           encoding: FileSystem.EncodingType.UTF8,
@@ -2037,15 +2038,15 @@ const AdminList = () => {
 
   return (
     <View style={styles.adminProfileContainer}>
-      <View style={[styles.adminHeader, {justifyContent: 'space-between'}]}>
-        <TouchableOpacity 
+      <View style={[styles.adminHeader, { justifyContent: 'space-between' }]}>
+        <TouchableOpacity
           style={styles.addButton}
           onPress={() => setAddModalVisible(true)}
         >
           <Text style={styles.addButtonText}>Add Admin Profile</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.addButton, {backgroundColor: '#4CAF50'}]}
+        <TouchableOpacity
+          style={[styles.addButton, { backgroundColor: '#4CAF50' }]}
           onPress={exportToCSV}
         >
           <Text style={styles.addButtonText}>Export to CSV</Text>
@@ -2085,7 +2086,7 @@ const AdminList = () => {
                   <Text style={[styles.tableCell, styles.emailCell]}>{item.email}</Text>
                   <Text style={[styles.tableCell, styles.passwordCell]}>{item.password}</Text>
                   <View style={[styles.tableCell, styles.actionCell]}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={[styles.actionButton, styles.editButton]}
                       onPress={() => handleEdit(item)}
                     >
@@ -2093,7 +2094,7 @@ const AdminList = () => {
                     </TouchableOpacity>
                   </View>
                   <View style={[styles.tableCell, styles.actionCell]}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={[styles.actionButton, styles.deleteButton]}
                       onPress={() => handleDelete(item.id)}
                     >
@@ -2108,78 +2109,78 @@ const AdminList = () => {
       </ScrollView>
 
       <Modal
-              visible={editModalVisible}
-              animationType="slide"
-              transparent={true}
-              onRequestClose={() => setEditModalVisible(false)}
-            >
-              <View style={styles.modalContainer}>
-                <View style={styles.modalContent}>
-                  <Text style={styles.modalTitle}>Edit Admin</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={editData?.username}
-                    onChangeText={txt => setEditData({ ...editData, username: txt })}
-                    placeholder="Username"
-                  />
-                  <TextInput
-                    style={styles.input}
-                    value={editData?.email}
-                    onChangeText={txt => setEditData({ ...editData, email: txt })}
-                    placeholder="Email"
-                    keyboardType="email-address"
-                  />
-                  <TextInput
-                    style={styles.input}
-                    value={editData?.password}
-                    onChangeText={txt => setEditData({ ...editData, password: txt })}
-                    placeholder="Password"
-                    secureTextEntry
-                  />
-                  <View style={styles.buttonRow}>
-                    <Button title="Save" onPress={handleEditSave} />
-                    <Button title="Cancel" color="#E31937" onPress={() => setEditModalVisible(false)} />
-                  </View>
-                </View>
-              </View>
-            </Modal>
-      
-            <Modal
-              visible={addModalVisible}
-              animationType="slide"
-              transparent={true}
-              onRequestClose={() => setAddModalVisible(false)}
-            >
-              <View style={styles.modalContainer}>
-                <View style={styles.modalContent}>
-                  <Text style={styles.modalTitle}>Add New Admin</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={newAdmin.username}
-                    onChangeText={txt => setNewAdmin({ ...newAdmin, username: txt })}
-                    placeholder="Username"
-                  />
-                  <TextInput
-                    style={styles.input}
-                    value={newAdmin.email}
-                    onChangeText={txt => setNewAdmin({ ...newAdmin, email: txt })}
-                    placeholder="Email"
-                    keyboardType="email-address"
-                  />
-                  <TextInput
-                    style={styles.input}
-                    value={newAdmin.password}
-                    onChangeText={txt => setNewAdmin({ ...newAdmin, password: txt })}
-                    placeholder="Password"
-                    secureTextEntry
-                  />
-                  <View style={styles.buttonRow}>
-                    <Button title="Add" onPress={handleAddAdmin} />
-                    <Button title="Cancel" color="#E31937" onPress={() => setAddModalVisible(false)} />
-                  </View>
-                </View>
-              </View>
-            </Modal>
+        visible={editModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Edit Admin</Text>
+            <TextInput
+              style={styles.input}
+              value={editData?.username}
+              onChangeText={txt => setEditData({ ...editData, username: txt })}
+              placeholder="Username"
+            />
+            <TextInput
+              style={styles.input}
+              value={editData?.email}
+              onChangeText={txt => setEditData({ ...editData, email: txt })}
+              placeholder="Email"
+              keyboardType="email-address"
+            />
+            <TextInput
+              style={styles.input}
+              value={editData?.password}
+              onChangeText={txt => setEditData({ ...editData, password: txt })}
+              placeholder="Password"
+              secureTextEntry
+            />
+            <View style={styles.buttonRow}>
+              <Button title="Save" onPress={handleEditSave} />
+              <Button title="Cancel" color="#E31937" onPress={() => setEditModalVisible(false)} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={addModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setAddModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add New Admin</Text>
+            <TextInput
+              style={styles.input}
+              value={newAdmin.username}
+              onChangeText={txt => setNewAdmin({ ...newAdmin, username: txt })}
+              placeholder="Username"
+            />
+            <TextInput
+              style={styles.input}
+              value={newAdmin.email}
+              onChangeText={txt => setNewAdmin({ ...newAdmin, email: txt })}
+              placeholder="Email"
+              keyboardType="email-address"
+            />
+            <TextInput
+              style={styles.input}
+              value={newAdmin.password}
+              onChangeText={txt => setNewAdmin({ ...newAdmin, password: txt })}
+              placeholder="Password"
+              secureTextEntry
+            />
+            <View style={styles.buttonRow}>
+              <Button title="Add" onPress={handleAddAdmin} />
+              <Button title="Cancel" color="#E31937" onPress={() => setAddModalVisible(false)} />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -2190,7 +2191,7 @@ const EmployeeList = () => {
       // Generate CSV content
       const headers = ['Employee ID', 'Name', 'Department', 'Role', 'Email', 'State', 'Contact Number'];
       let csvContent = headers.join(',') + '\n';
-      
+
       employees.forEach(emp => {
         const row = [
           `"${emp.empId || ''}"`,
@@ -2217,7 +2218,7 @@ const EmployeeList = () => {
       } else {
         // For mobile platforms
         const fileUri = FileSystem.documentDirectory + 'employee_report.csv';
-        
+
         // Write the file
         await FileSystem.writeAsStringAsync(fileUri, csvContent, {
           encoding: FileSystem.EncodingType.UTF8,
@@ -2234,7 +2235,7 @@ const EmployeeList = () => {
       alert('Failed to export data: ' + e.message);
     }
   };
-  
+
   const [employees, setEmployees] = useState([]);
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -2242,6 +2243,8 @@ const EmployeeList = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [editData, setEditData] = useState(null);
+  const [importLoading, setImportLoading] = useState(false);
+  const fileInputRef = useRef(null);
   const [newEmployee, setNewEmployee] = useState({
     empId: '',
     name: '',
@@ -2251,6 +2254,23 @@ const EmployeeList = () => {
     email: '',
     contactNumber: ''
   });
+
+  const handleImportCSV = async (event) => {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+    setImportLoading(true);
+    try {
+      const result = await importEmployeesFromExcel(file);
+      alert(`Import complete!\n\nSuccessfully imported: ${result.success}\nFailed: ${result.failed}`);
+      fetchEmployees(); // Refresh the employee list
+    } catch (err) {
+      alert('Import failed: ' + err.message);
+    } finally {
+      setImportLoading(false);
+      // Reset file input so the same file can be selected again
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const fetchEmployees = async () => {
     try {
@@ -2298,13 +2318,13 @@ const EmployeeList = () => {
   const handleEditSave = async () => {
     try {
       const { id, empId, name, department, role, state, email, contactNumber } = editData;
-      
+
       // Validate that all required fields are filled
       if (!empId || !name || !department || !role || !state || !email || !contactNumber) {
         alert('Please fill in all fields. All fields are required.');
         return;
       }
-      
+
       // Trim whitespace from all fields
       const trimmedEmployee = {
         empId: empId.trim(),
@@ -2315,22 +2335,22 @@ const EmployeeList = () => {
         email: email.trim(),
         contactNumber: contactNumber.trim()
       };
-      
+
       // Check if any field is empty after trimming
-      if (!trimmedEmployee.empId || !trimmedEmployee.name || !trimmedEmployee.department || 
-          !trimmedEmployee.role || !trimmedEmployee.state || !trimmedEmployee.email || !trimmedEmployee.contactNumber) {
+      if (!trimmedEmployee.empId || !trimmedEmployee.name || !trimmedEmployee.department ||
+        !trimmedEmployee.role || !trimmedEmployee.state || !trimmedEmployee.email || !trimmedEmployee.contactNumber) {
         alert('Please fill in all fields. All fields are required.');
         return;
       }
-      
+
       // Validate contact number format
       const contactNumberRegex = /^\d{10}$/;
       if (!contactNumberRegex.test(trimmedEmployee.contactNumber)) {
         alert('Contact number must be exactly 10 digits and contain only numbers.');
         return;
       }
-      
-      await updateDoc(doc(db, 'employees', id), { 
+
+      await updateDoc(doc(db, 'employees', id), {
         ...trimmedEmployee,
         email: trimmedEmployee.email.toLowerCase(), // Store email in lowercase for consistency
         department: trimmedEmployee.department.toLowerCase(), // Store department in lowercase
@@ -2348,13 +2368,13 @@ const EmployeeList = () => {
   const handleAddEmployee = async () => {
     try {
       const { empId, name, department, role, state, email, contactNumber } = newEmployee;
-      
+
       // Validate that all required fields are filled
       if (!empId || !name || !department || !role || !state || !email || !contactNumber) {
         alert('Please fill in all fields. All fields are required.');
         return;
       }
-      
+
       // Trim whitespace from all fields
       const trimmedEmployee = {
         empId: empId.trim(),
@@ -2365,21 +2385,21 @@ const EmployeeList = () => {
         email: email.trim(),
         contactNumber: contactNumber.trim()
       };
-      
+
       // Check if any field is empty after trimming
-      if (!trimmedEmployee.empId || !trimmedEmployee.name || !trimmedEmployee.department || 
-          !trimmedEmployee.role || !trimmedEmployee.state || !trimmedEmployee.email || !trimmedEmployee.contactNumber) {
+      if (!trimmedEmployee.empId || !trimmedEmployee.name || !trimmedEmployee.department ||
+        !trimmedEmployee.role || !trimmedEmployee.state || !trimmedEmployee.email || !trimmedEmployee.contactNumber) {
         alert('Please fill in all fields. All fields are required.');
         return;
       }
-      
+
       // Validate contact number format
       const contactNumberRegex = /^\d{10}$/;
       if (!contactNumberRegex.test(trimmedEmployee.contactNumber)) {
         alert('Contact number must be exactly 10 digits and contain only numbers.');
         return;
       }
-      
+
       // Check if employee with the same ID already exists
       const empIdQuery = query(collection(db, 'employees'), where('empId', '==', trimmedEmployee.empId));
       const empIdSnapshot = await getDocs(empIdQuery);
@@ -2387,7 +2407,7 @@ const EmployeeList = () => {
         alert('Employee with this ID already exists.');
         return;
       }
-      
+
       // Check if employee with the same email already exists
       const emailQuery = query(collection(db, 'employees'), where('email', '==', trimmedEmployee.email.toLowerCase()));
       const emailSnapshot = await getDocs(emailQuery);
@@ -2395,7 +2415,7 @@ const EmployeeList = () => {
         alert('Employee with this email already exists.');
         return;
       }
-      
+
       // Add the employee to the database
       await setDoc(doc(db, 'employees', trimmedEmployee.empId), {
         ...trimmedEmployee,
@@ -2404,19 +2424,19 @@ const EmployeeList = () => {
         state: trimmedEmployee.state.toLowerCase(), // Store state in lowercase
         role: trimmedEmployee.role.toLowerCase() // Store role in lowercase
       });
-      
+
       // Reset form and refresh the list
       setAddModalVisible(false);
-      setNewEmployee({ 
-        empId: '', 
-        name: '', 
-        department: '', 
+      setNewEmployee({
+        empId: '',
+        name: '',
+        department: '',
         role: '',
         state: '',
         email: '',
         contactNumber: ''
       });
-      
+
       fetchEmployees();
       alert('Employee added successfully');
     } catch (e) {
@@ -2428,19 +2448,41 @@ const EmployeeList = () => {
 
   return (
     <View style={styles.adminProfileContainer}>
-      <View style={[styles.adminHeader, {justifyContent: 'space-between'}]}>
-        <TouchableOpacity 
+      <View style={[styles.adminHeader, { justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }]}>
+        <TouchableOpacity
           style={styles.addButton}
           onPress={() => setAddModalVisible(true)}
         >
           <Text style={styles.addButtonText}>Add Employee</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.addButton, {backgroundColor: '#4CAF50'}]}
+        <TouchableOpacity
+          style={[styles.addButton, { backgroundColor: '#2196F3' }]}
+          onPress={() => {
+            if (Platform.OS === 'web' && fileInputRef.current) {
+              fileInputRef.current.click();
+            } else {
+              alert('CSV import is currently supported on web only.');
+            }
+          }}
+          disabled={importLoading}
+        >
+          <Text style={styles.addButtonText}>{importLoading ? 'Importing...' : 'Import from CSV'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.addButton, { backgroundColor: '#4CAF50' }]}
           onPress={exportToCSV}
         >
           <Text style={styles.addButtonText}>Export to CSV</Text>
         </TouchableOpacity>
+        {Platform.OS === 'web' && (
+          <input
+            type="file"
+            accept=".csv,.xlsx,.xls"
+            ref={fileInputRef}
+            style={{ display: 'none' }}
+            onChange={handleImportCSV}
+          />
+        )}
       </View>
 
       <Text style={styles.sectionTitle}>Employee Data</Text>
@@ -2454,16 +2496,16 @@ const EmployeeList = () => {
 
       <ScrollView horizontal showsHorizontalScrollIndicator={true}>
         <View style={styles.adminTable}>
-          <View style={[styles.tableHeader, {minWidth: 1100}]}>
-            <Text style={[styles.tableHeaderCell, {width: 80}]}>ID</Text>
-            <Text style={[styles.tableHeaderCell, {width: 150}]}>Name</Text>
-            <Text style={[styles.tableHeaderCell, {width: 120}]}>Department</Text>
-            <Text style={[styles.tableHeaderCell, {width: 150}]}>Role</Text>
-            <Text style={[styles.tableHeaderCell, {width: 200}]}>Email</Text>
-            <Text style={[styles.tableHeaderCell, {width: 120}]}>State</Text>
-            <Text style={[styles.tableHeaderCell, {width: 120}]}>Contact</Text>
-            <Text style={[styles.tableHeaderCell, {width: 80}]}>EDIT</Text>
-            <Text style={[styles.tableHeaderCell, {width: 100}]}>DELETE</Text>
+          <View style={[styles.tableHeader, { minWidth: 1100 }]}>
+            <Text style={[styles.tableHeaderCell, { width: 80 }]}>ID</Text>
+            <Text style={[styles.tableHeaderCell, { width: 150 }]}>Name</Text>
+            <Text style={[styles.tableHeaderCell, { width: 120 }]}>Department</Text>
+            <Text style={[styles.tableHeaderCell, { width: 150 }]}>Role</Text>
+            <Text style={[styles.tableHeaderCell, { width: 200 }]}>Email</Text>
+            <Text style={[styles.tableHeaderCell, { width: 120 }]}>State</Text>
+            <Text style={[styles.tableHeaderCell, { width: 120 }]}>Contact</Text>
+            <Text style={[styles.tableHeaderCell, { width: 80 }]}>EDIT</Text>
+            <Text style={[styles.tableHeaderCell, { width: 100 }]}>DELETE</Text>
           </View>
 
           {filteredEmployees.length === 0 ? (
@@ -2475,28 +2517,28 @@ const EmployeeList = () => {
               data={filteredEmployees}
               keyExtractor={item => item.id}
               renderItem={({ item }) => (
-                <View style={[styles.tableRow, {minWidth: 1100}]}>
-                  <Text style={[styles.tableCell, {width: 80}]}>{item.empId || item.id}</Text>
-                  <Text style={[styles.tableCell, {width: 150}]}>{item.name}</Text>
-                  <Text style={[styles.tableCell, {width: 120}]}>{item.department}</Text>
-                  <Text style={[styles.tableCell, {width: 150}]}>{item.role}</Text>
-                  <Text style={[styles.tableCell, {width: 200}]} numberOfLines={1} ellipsizeMode="tail">{item.email || 'N/A'}</Text>
-                  <Text style={[styles.tableCell, {width: 120}]}>{item.state || 'N/A'}</Text>
-                  <Text style={[styles.tableCell, {width: 120}]}>{item.contactNumber || 'N/A'}</Text>
-                  <View style={[styles.tableCell, {width: 80, paddingVertical: 5}]}>
-                    <TouchableOpacity 
-                      style={[styles.actionButton, styles.editButton, {padding: 5}]}
+                <View style={[styles.tableRow, { minWidth: 1100 }]}>
+                  <Text style={[styles.tableCell, { width: 80 }]}>{item.empId || item.id}</Text>
+                  <Text style={[styles.tableCell, { width: 150 }]}>{item.name}</Text>
+                  <Text style={[styles.tableCell, { width: 120 }]}>{item.department}</Text>
+                  <Text style={[styles.tableCell, { width: 150 }]}>{item.role}</Text>
+                  <Text style={[styles.tableCell, { width: 200 }]} numberOfLines={1} ellipsizeMode="tail">{item.email || 'N/A'}</Text>
+                  <Text style={[styles.tableCell, { width: 120 }]}>{item.state || 'N/A'}</Text>
+                  <Text style={[styles.tableCell, { width: 120 }]}>{item.contactNumber || 'N/A'}</Text>
+                  <View style={[styles.tableCell, { width: 80, paddingVertical: 5 }]}>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.editButton, { padding: 5 }]}
                       onPress={() => handleEdit(item)}
                     >
-                      <Text style={[styles.actionButtonText, {fontSize: 12}]}>EDIT</Text>
+                      <Text style={[styles.actionButtonText, { fontSize: 12 }]}>EDIT</Text>
                     </TouchableOpacity>
                   </View>
-                  <View style={[styles.tableCell, {width: 100, paddingVertical: 5}]}>
-                    <TouchableOpacity 
-                      style={[styles.actionButton, styles.deleteButton, {padding: 5}]}
+                  <View style={[styles.tableCell, { width: 100, paddingVertical: 5 }]}>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.deleteButton, { padding: 5 }]}
                       onPress={() => handleDelete(item.id)}
                     >
-                      <Text style={[styles.actionButtonText, {fontSize: 12}]}>DELETE</Text>
+                      <Text style={[styles.actionButtonText, { fontSize: 12 }]}>DELETE</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -2567,7 +2609,7 @@ const EmployeeList = () => {
           </View>
         </View>
       </Modal>
-      
+
       <Modal
         visible={addModalVisible}
         animationType="slide"

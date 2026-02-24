@@ -1,0 +1,11 @@
+id,name,grade,state,department,official mobile no.,email
+E001,Amit Sharma,Senior Engineer,Maharashtra,Engineering,9876543201,amit.sharma@company.com
+E002,Priya Patel,Manager,Gujarat,Human Resources,9876543202,priya.patel@company.com
+E003,Rahul Verma,Junior Engineer,Karnataka,Engineering,9876543203,rahul.verma@company.com
+E004,Sneha Deshmukh,Team Lead,Maharashtra,Marketing,9876543204,sneha.deshmukh@company.com
+E005,Vikram Singh,Senior Analyst,Rajasthan,Finance,9876543205,vikram.singh@company.com
+E006,Anita Kulkarni,Associate,Tamil Nadu,Operations,9876543206,anita.kulkarni@company.com
+E007,Rohan Joshi,Engineer,Maharashtra,Engineering,9876543207,rohan.joshi@company.com
+E008,Meera Nair,HR Executive,Kerala,Human Resources,9876543208,meera.nair@company.com
+E009,Suresh Reddy,Deputy Manager,Telangana,Sales,9876543209,suresh.reddy@company.com
+E010,Kavita Bhatt,Senior Designer,Uttarakhand,Design,9876543210,kavita.bhatt@company.com
